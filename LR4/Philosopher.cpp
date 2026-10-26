@@ -28,24 +28,28 @@ int Philosopher::getRightFork() const {
 
 void Philosopher::setState(PhilosopherState newState) {
     state_ = newState;
+
+    if (newState == PhilosopherState::FINISHED) {
+        std::cout << "[P" << config_.id << "] All cycles finished" << std::endl;
+    }
+    /*
     string stateStr;
     switch (newState) {
-    case PhilosopherState::THINKING: stateStr = "THINKING"; break;
-    case PhilosopherState::WAITING:  stateStr = "WAITING";  break;
-    case PhilosopherState::EATING:   stateStr = "EATING";   break;
-    case PhilosopherState::FINISHED: stateStr = "FINISHED"; break;
+        case PhilosopherState::THINKING: stateStr = "THINKING"; break;
+        case PhilosopherState::WAITING:  stateStr = "WAITING";  break;
+        case PhilosopherState::EATING:   stateStr = "EATING";   break;
+        case PhilosopherState::FINISHED: stateStr = "FINISHED"; break;
     }
 
     ostringstream oss;
-    oss << "WORKER " << config_.id
-        << " | TID=" << tid_
-        << " | STATE=" << stateStr;
+    oss << "WORKER " << config_.id << " | TID=" << tid_ << " | STATE=" << stateStr;
 
     if (logger_) {
         logger_->log(config_.id, stateStr);
     }
 
     cout << oss.str() << endl;
+    */
 }
 
 DWORD WINAPI Philosopher::threadProc(LPVOID param) {

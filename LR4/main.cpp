@@ -163,10 +163,10 @@ int main(int argc, char* argv[]) {
     cout << "Configuration:\n";
     cout << "  Philosophers: " << baseConfig.numPhilosophers << "\n";
     cout << "  Cycles (by def.): " << baseConfig.numCycles << "\n";
-    cout << "  Thinking time (by def.): " << baseConfig.thinkingTimeMs << " мс\n";
-    cout << "  Eating time: " << baseConfig.eatingTimeMs << " мс\n";
-    cout << "  Wait time: " << baseConfig.maxWaitTimeMs << " мс\n";
-    cout << "  Experiment time: " << baseConfig.experimentTimeoutMs << " мс\n\n";
+    cout << "  Thinking time (by def.): " << baseConfig.thinkingTimeMs << " ms\n";
+    cout << "  Eating time: " << baseConfig.eatingTimeMs << " ms\n";
+    cout << "  Wait time: " << baseConfig.maxWaitTimeMs << " ms\n";
+    cout << "  Experiment time: " << baseConfig.experimentTimeoutMs << " ms\n\n";
 
     vector<ExperimentResult> results;
 
@@ -182,11 +182,11 @@ int main(int argc, char* argv[]) {
     }
 
     cout << "\n\n";
-    cout << "========================================================\n";
-    cout << "|                 Final report                         |\n";
-    cout << "|======================================================|\n";
-    cout << "| Experiment        │ Phi.  │ Think.  │ Time   │ Vio.  |\n";
-    cout << "|======================================================|\n";
+    cout << "==========================================================\n";
+    cout << "|                 Final report                           |\n";
+    cout << "|========================================================|\n";
+    cout << "| Experiment        | Phi.  | Think.  | Time     | Vio.  |\n";
+    cout << "|========================================================|\n";
 
     int totalViolations = 0;
     bool anyDeadlock = false;
@@ -194,7 +194,7 @@ int main(int argc, char* argv[]) {
     for (const auto& r : results) {
         char buf[256];
         snprintf(buf, sizeof(buf),
-            "| P%d_T%dms  │  %d   │ %2d мс │ %5d мс │  %d    |",
+            "| P%d_T%2dms          |  %d    | %2d ms   | %5d ms |  %4d |",
             r.numPhilosophers, r.thinkingTimeMs,
             r.numPhilosophers, r.thinkingTimeMs,
             r.totalDurationMs, r.invariantViolations);
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
         if (r.deadlockDetected) anyDeadlock = true;
     }
 
-    cout << "========================================================\n";
+    cout << "==========================================================\n";
     cout << "\nTotal invariant violations: " << totalViolations << "\n";
     cout << "Mutual blocking of detections: " << (anyDeadlock ? "Yes" : "No") << "\n";
 
@@ -214,5 +214,5 @@ int main(int argc, char* argv[]) {
     else {
         cout << "\n[FAIL] Violations or mutual blocking were detected.\n";
     }
-    return (totalViolations == 0 && !anyDeadlock) ? 0 : 1;
+     return (totalViolations == 0 && !anyDeadlock) ? 0 : 1;
 }

@@ -57,9 +57,9 @@ void Stats::printSummary() const {
     for (const auto& s : stats_) {
         cout << left << setw(6) << s.id
             << setw(10) << s.cyclesCompleted
-            << setw(12) << (s.totalThinkingTime + " ms")
-            << setw(10) << (s.totalEatingTime + " ms")
-            << setw(12) << (s.totalWaitingTime + " ms")
+            << setw(12) << (to_string(s.totalThinkingTime) + " ms")
+            << setw(10) << (to_string(s.totalEatingTime) + " ms")
+            << setw(12) << (to_string(s.totalWaitingTime) + " ms")
             << setw(10) << s.timeoutCount
             << setw(12) << s.invariantViolations << "\n";
         totalViolations += s.invariantViolations;
