@@ -22,6 +22,12 @@ struct Config {
     DWORD experimentTimeoutMs = 30000;
     bool logEnabled = true;
     bool verbose = false;
+
+    int studentId = 0;
+    int seed = 1000;           
+    int operations = 100;
+
+    int numRuns = 3;
 };
 
 Config readConfig(const string& filename) {
@@ -54,30 +60,43 @@ Config readConfig(const string& filename) {
         else if (key == "log_enabled") cfg.logEnabled = (value == "1");
         else if (key == "verbose") cfg.verbose = (value == "1");
     }
+
+    cfg.seed = 1000 + cfg.studentId * 97;
+    cfg.operations = cfg.numCycles + cfg.studentId * 5;
+
     return cfg;
 }
 
 struct ExperimentResult {
+    string expName;
     int numPhilosophers;
     int thinkingTimeMs;
+    int numCycles;
     int totalDurationMs;
     int invariantViolations;
     bool deadlockDetected;
+
+    int totalSuccessfulOps;    
+    int totalTimeouts;         
+    int totalWaitingTimeMs;    
+    double avgCycleTimeMs;
+
+    int runNum;
 };
 
-ExperimentResult runExperiment(const Config& baseConfig,
-    int numPhilosophers,
-    int thinkingTimeMs,
-    const string& expName) {
+ExperimentResult runExperiment(const Config& baseConfig, int numPhilosophers,
+                               int thinkingTimeMs, const string& expName,
+                               int runNumber, int numCycles) {
 
-    cout << "\n========================================\n";
-    cout << "Experiment: " << expName << "\n";
-    cout << "Philosophers: " << numPhilosophers << ", thinking time: " << thinkingTimeMs << " ms\n";
-    cout << "========================================\n";
+    cout << "\n----------------------------------------\n";
+    cout << "Experiment: " << expName << " (run " << runNumber << ")\n";
+    cout << "Philosophers: " << numPhilosophers << ", Cycles: " << numCycles << ", Thinking: " << thinkingTimeMs << " ms\n";
+    cout << "----------------------------------------\n";
 
     Config cfg = baseConfig;
     cfg.numPhilosophers = numPhilosophers;
     cfg.thinkingTimeMs = thinkingTimeMs;
+    cfg.numCycles = numCycles;
 
     vector<Fork> forks;
     for (int i = 0; i < cfg.numPhilosophers; i++) {
@@ -85,7 +104,8 @@ ExperimentResult runExperiment(const Config& baseConfig,
     }
 
     Logger logger;
-    logger.init(cfg.logEnabled, cfg.verbose, "experiment_" + expName + ".log");
+    string logFile = "experiment_" + expName + "_run" + to_string(runNumber) + ".log";
+    logger.init(cfg.logEnabled, cfg.verbose, logFile);
 
     Stats stats(cfg.numPhilosophers);
     InvariantChecker invariants(cfg.numPhilosophers, cfg.numPhilosophers);
@@ -107,7 +127,8 @@ ExperimentResult runExperiment(const Config& baseConfig,
 
         HANDLE hThread = CreateThread(NULL, 0, Philosopher::threadProc, p, 0, NULL);
         if (hThread == NULL) {
-            cout << "Error creating thread for philosopher " << i << ": " << GetLastError() << endl;
+            cout << "Error creating thread for philosopher " << i
+                << ": " << GetLastError() << endl;
             delete p;
             continue;
         }
@@ -118,7 +139,7 @@ ExperimentResult runExperiment(const Config& baseConfig,
     DWORD waitResult = WaitForMultipleObjects(
         (DWORD)threads.size(),
         threads.data(),
-        TRUE,  
+        TRUE,
         cfg.experimentTimeoutMs
     );
 
@@ -140,14 +161,26 @@ ExperimentResult runExperiment(const Config& baseConfig,
 
     invariants.checkAllForksReleased();
 
-    stats.printSummary();
+    int totalSuccessfulOps = 0;
+    int totalTimeouts = 0;
+    int totalWaitingTime = 0;
+
+    totalSuccessfulOps = numCycles * numPhilosophers;
 
     ExperimentResult result;
+    result.expName = expName;
     result.numPhilosophers = numPhilosophers;
     result.thinkingTimeMs = thinkingTimeMs;
+    result.numCycles = numCycles;
     result.totalDurationMs = totalDuration;
     result.invariantViolations = invariants.getViolationCount();
     result.deadlockDetected = deadlockDetected;
+    result.totalSuccessfulOps = totalSuccessfulOps;
+    result.totalTimeouts = totalTimeouts;
+    result.totalWaitingTimeMs = totalWaitingTime;
+    result.avgCycleTimeMs = (totalDuration > 0) ?
+        (double)totalDuration / (numCycles * numPhilosophers) : 0;
+    result.runNum = runNumber;
 
     for (auto p : philosophers) delete p;
 
@@ -161,13 +194,19 @@ int main(int argc, char* argv[]) {
     Config baseConfig = readConfig(configFile);
 
     cout << "Configuration:\n";
-    cout << "  Philosophers: " << baseConfig.numPhilosophers << "\n";
+    cout << "  STUDENT_ID: " << baseConfig.studentId << "\n";
+    cout << "  SEED: " << baseConfig.seed << "\n";
+    cout << "  BASE_OPERATIONS: " << baseConfig.numCycles << "\n";
+    cout << "  OPERATIONS (indiv.): " << baseConfig.operations << "\n";
+    cout << "  Philosophers (for indiv.): " << baseConfig.numPhilosophers << "\n";
     cout << "  Cycles (by def.): " << baseConfig.numCycles << "\n";
     cout << "  Thinking time (by def.): " << baseConfig.thinkingTimeMs << " ms\n";
     cout << "  Eating time: " << baseConfig.eatingTimeMs << " ms\n";
     cout << "  Wait time: " << baseConfig.maxWaitTimeMs << " ms\n";
-    cout << "  Experiment time: " << baseConfig.experimentTimeoutMs << " ms\n\n";
+    cout << "  Experiment time: " << baseConfig.experimentTimeoutMs << " ms\n";
+    cout << "  Number of runs: " << baseConfig.numRuns << '\n';
 
+    int runs = baseConfig.numRuns;
     vector<ExperimentResult> results;
 
     int philosopherCounts[] = { 5, 7 };
@@ -175,18 +214,26 @@ int main(int argc, char* argv[]) {
 
     for (int np : philosopherCounts) {
         for (int tt : thinkingTimes) {
-            string expName = "P" + to_string(np) + "_T" + to_string(tt) + "ms";
-            ExperimentResult res = runExperiment(baseConfig, np, tt, expName);
-            results.push_back(res);
+            for (int run = 1; run <= runs; ++run) {
+                string expName = "P" + to_string(np) + "_T" + to_string(tt) + "ms";
+                ExperimentResult res = runExperiment(baseConfig, np, tt, expName, run, baseConfig.numCycles);
+                results.push_back(res);
+            }
         }
+    }
+    
+    for (int run = 1; run <= runs; ++run) {
+        string expName = "Indiv";
+        ExperimentResult res = runExperiment(baseConfig, baseConfig.numPhilosophers, baseConfig.thinkingTimeMs, expName, run, baseConfig.operations);
+        results.push_back(res);
     }
 
     cout << "\n\n";
-    cout << "==========================================================\n";
-    cout << "|                 Final report                           |\n";
-    cout << "|========================================================|\n";
-    cout << "| Experiment        | Phi.  | Think.  | Time     | Vio.  |\n";
-    cout << "|========================================================|\n";
+    cout << "=================================================================\n";
+    cout << "|                        Final report                           |\n";
+    cout << "|===============================================================|\n";
+    cout << "| Experiment        | Phi.  | Think.  | Time     | Vio.  | Run  |\n";
+    cout << "|===============================================================|\n";
 
     int totalViolations = 0;
     bool anyDeadlock = false;
@@ -194,16 +241,15 @@ int main(int argc, char* argv[]) {
     for (const auto& r : results) {
         char buf[256];
         snprintf(buf, sizeof(buf),
-            "| P%d_T%2dms          |  %d    | %2d ms   | %5d ms |  %4d |",
-            r.numPhilosophers, r.thinkingTimeMs,
-            r.numPhilosophers, r.thinkingTimeMs,
-            r.totalDurationMs, r.invariantViolations);
+            "| %17s | %5d | %4d ms | %5d ms | %5d | %4d |",
+            r.expName.c_str(), r.numPhilosophers, r.thinkingTimeMs,
+            r.totalDurationMs, r.invariantViolations, r.runNum);
         cout << buf << "\n";
         totalViolations += r.invariantViolations;
         if (r.deadlockDetected) anyDeadlock = true;
     }
 
-    cout << "==========================================================\n";
+    cout << "================================================================\n";
     cout << "\nTotal invariant violations: " << totalViolations << "\n";
     cout << "Mutual blocking of detections: " << (anyDeadlock ? "Yes" : "No") << "\n";
 

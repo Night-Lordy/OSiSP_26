@@ -25,11 +25,8 @@ struct PhilosopherConfig {
 
 class Philosopher {
     public:
-        Philosopher(const PhilosopherConfig& config,
-            Fork* forks,
-            Logger* logger,
-            Stats* stats,
-            InvariantChecker* invariants);
+        Philosopher(const PhilosopherConfig& config, Fork* forks,
+                    Logger* logger, Stats* stats, InvariantChecker* invariants);
         ~Philosopher();
 
         void run();

@@ -2,7 +2,11 @@ num_philosophers = 5
 num_cycles = 100
 thinking_time_ms = 2
 eating_time_ms = 5
-max_wait_time_ms = 5000
+max_wait_time_ms = 100
 experiment_timeout_ms = 30000
 log_enabled = 1
 verbose = 0
+
+student_id=18
+
+num_runs=3

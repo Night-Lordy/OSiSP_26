@@ -5,11 +5,9 @@
 
 using namespace std;
 
-Philosopher::Philosopher(const PhilosopherConfig& config,
-    Fork* forks,
-    Logger* logger,
-    Stats* stats,
-    InvariantChecker* invariants) : config_(config), forks_(forks), logger_(logger),
+Philosopher::Philosopher(const PhilosopherConfig& config, Fork* forks,
+                         Logger* logger, Stats* stats, InvariantChecker* invariants) : 
+    config_(config), forks_(forks), logger_(logger),
     stats_(stats), invariants_(invariants), state_(PhilosopherState::THINKING), threadHandle_(NULL), tid_(0) {}
 
 Philosopher::~Philosopher() {
@@ -30,7 +28,7 @@ void Philosopher::setState(PhilosopherState newState) {
     state_ = newState;
 
     if (newState == PhilosopherState::FINISHED) {
-        std::cout << "[P" << config_.id << "] All cycles finished" << std::endl;
+        cout << "[P" << config_.id << "] All cycles finished" << endl;
     }
     /*
     string stateStr;
