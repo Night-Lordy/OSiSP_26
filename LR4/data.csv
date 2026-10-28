@@ -1,0 +1,6 @@
+experiment,philosophers,thinking_time,run1_time,run2_time,run3_time,avg_time,run1_violations,run2_violations,run3_violations,avg_violations
+P5_T2ms,5,2,12672,1593,1594,5286,0,0,0,0
+P5_T15ms,5,15,1719,1890,3203,2271,0,0,161,54
+P7_T2ms,7,2,12672,1578,12672,8974,157,0,165,107
+P7_T15ms,7,15,12796,4500,4500,7265,164,673,653,497
+Indiv,5,2,1578,1579,12703,5287,0,0,52,17
